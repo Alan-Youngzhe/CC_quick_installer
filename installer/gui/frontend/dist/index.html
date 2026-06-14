@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>claude_toolbox</title>
+  <style>
+    :root {
+      --bg: #070b08;
+      --bg2: #0b110d;
+      --fg: #33ff7a;        /* 磷光绿 */
+      --fg-dim: #1f7a45;
+      --amber: #ffc56b;
+      --red: #ff5f56;
+      --border-c: #16442a;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--fg);
+      font-family: var(--mono); font-size: 13px; line-height: 1.5;
+      -webkit-font-smoothing: none; text-shadow: 0 0 2px rgba(51,255,122,.35);
+      overflow-x: hidden;
+    }
+    /* CRT 扫描线 + 轻微噪点,纯 CSS,零额外资源 */
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 9;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.18) 3px);
+      animation: flick 4s infinite steps(60);
+    }
+    @keyframes flick { 0%,97%{opacity:1} 98%{opacity:.85} 100%{opacity:1} }
+
+    .wrap { padding: 14px 18px 26px; position: relative; z-index: 1; }
+
+    pre.banner {
+      margin: 0 0 2px; color: var(--fg); font-size: 9px; line-height: 1.05;
+      letter-spacing: 0; white-space: pre; overflow: hidden;
+    }
+    .installer-tag {
+      color: var(--amber); font-size: 13px; letter-spacing: 3px;
+      margin: 0 0 4px; font-weight: normal;
+    }
+    .sub { color: var(--fg-dim); font-size: 12px; margin: 0 0 14px; }
+    .sub .blink { animation: blink 1s steps(2) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .panel {
+      border: 1px solid var(--border-c); border-radius: 2px; background: var(--bg2);
+      padding: 12px 14px 14px; margin-bottom: 16px; position: relative;
+    }
+    .panel > .label {
+      position: absolute; top: -8px; left: 10px; background: var(--bg2);
+      padding: 0 6px; font-size: 11px; color: var(--amber); letter-spacing: 1px;
+    }
+    .desc { color: var(--fg-dim); font-size: 11px; margin: 2px 0 12px; }
+
+    .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+    button {
+      font: inherit; cursor: pointer; color: var(--fg); background: transparent;
+      border: 1px solid var(--fg-dim); border-radius: 2px; padding: 6px 14px;
+      text-shadow: inherit; transition: .1s; letter-spacing: .5px;
+    }
+    button:hover:not(:disabled) { background: var(--fg); color: #04140a; text-shadow: none; }
+    button:disabled { opacity: .4; cursor: default; }
+    button.primary { border-color: var(--fg); }
+    button.primary::before { content: "▶ "; }
+
+    .badge { font-size: 11px; color: var(--fg-dim); }
+    .badge.run { color: var(--amber); }
+    .badge.ok { color: var(--fg); }
+    .badge.warn { color: var(--red); }
+
+    .console {
+      margin-top: 12px; border: 1px solid var(--border-c); background: #050805;
+      height: 188px; overflow-y: auto; padding: 9px 11px; font-size: 12px;
+      white-space: pre-wrap; word-break: break-all; color: #8fdcab;
+    }
+    .console:empty::before { content: "$ 等待指令 — 点 [RUN INSTALL] 开始体检与修复_"; color: var(--fg-dim); }
+    .console .l-ok  { color: var(--fg); }
+    .console .l-fix { color: var(--amber); }
+    .console .l-err { color: var(--red); }
+    .console::-webkit-scrollbar { width: 8px; }
+    .console::-webkit-scrollbar-thumb { background: var(--border-c); }
+
+    .status { font-size: 12px; color: var(--fg-dim); margin-bottom: 10px; }
+    .status.ok { color: var(--fg); }
+
+    textarea {
+      font: inherit; width: 100%; min-height: 150px; resize: vertical; color: var(--fg);
+      background: #050805; border: 1px solid var(--border-c); border-radius: 2px;
+      padding: 10px 12px; font-size: 12px; line-height: 1.5; text-shadow: inherit;
+    }
+    textarea:focus, button:focus { outline: 1px solid var(--fg); outline-offset: 1px; }
+    textarea::placeholder { color: #2c6b44; }
+
+    .toast { font-size: 12px; color: var(--fg-dim); min-height: 16px; margin-top: 9px; }
+    .toast.ok { color: var(--fg); }
+    .toast.err { color: var(--red); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <pre class="banner"> ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗     ██████╗ ██████╗ ██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝    ██╔════╝██╔═══██╗██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗      ██║     ██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝      ██║     ██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗    ╚██████╗╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝     ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝</pre>
+    <div class="installer-tag">▌ QUICK INSTALLER</div>
+    <div class="sub">// 一键安装器 · 用户态零依赖 · 国内直连 <span id="sys">booting…</span><span class="blink">_</span></div>
+
+    <section class="panel">
+      <span class="label">[ env_doctor ]</span>
+      <div class="desc">检测并修复开发环境 — node / claude / npm / PATH,全程用户态,无需 sudo</div>
+      <div class="row">
+        <button class="primary" id="btnInstall">RUN INSTALL</button>
+        <span class="badge" id="installBadge">idle</span>
+      </div>
+      <div class="console" id="console"></div>
+    </section>
+
+    <section class="panel">
+      <span class="label">[ import_config ]</span>
+      <div class="desc">粘贴一份 settings.json &gt; 写入 ~/.claude/settings.json(想换配置先移除再导入)</div>
+      <div class="status" id="cfgStatus">scanning…</div>
+      <textarea id="cfgText" spellcheck="false" placeholder='> paste settings.json
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.moonshot.cn/anthropic",
+    "ANTHROPIC_AUTH_TOKEN": "sk-...",
+    "ANTHROPIC_MODEL": "kimi-k2-turbo-preview"
+  }
+}'></textarea>
+      <div class="row" style="margin-top: 10px;">
+        <button class="primary" id="btnImport">IMPORT</button>
+        <button id="btnRemove">REMOVE</button>
+      </div>
+      <div class="toast" id="toast"></div>
+    </section>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const App = () => window.go.main.App;
+
+    function classifyLine(line) {
+      if (line.includes("[失败]")) return "l-err";
+      if (line.includes("[完成]") || line.includes("[就绪]")) return "l-ok";
+      if (line.includes("[修复]")) return "l-fix";
+      return "";
+    }
+    function appendLog(line) {
+      const el = $("console");
+      const span = document.createElement("span");
+      span.className = classifyLine(line);
+      span.textContent = line;
+      el.appendChild(span);
+      el.scrollTop = el.scrollHeight;
+    }
+    function toast(msg, kind) { const t = $("toast"); t.textContent = msg; t.className = "toast" + (kind ? " " + kind : ""); }
+
+    async function loadSys() {
+      try {
+        const s = await App().SystemInfo();
+        $("sys").textContent = `· ${s.os}/${s.arch}`;
+      } catch (e) { $("sys").textContent = "· env?"; }
+    }
+
+    async function loadConfig() {
+      try {
+        const c = await App().GetConfig();
+        const s = $("cfgStatus");
+        if (c.configured) {
+          s.textContent = "● 已导入配置 (~/.claude/settings.json)";
+          s.className = "status ok";
+          $("cfgText").value = c.content;
+        } else {
+          s.textContent = "○ 尚未导入配置";
+          s.className = "status";
+        }
+      } catch (e) { $("cfgStatus").textContent = "× 读取配置失败"; }
+    }
+
+    $("btnInstall").onclick = async () => {
+      const btn = $("btnInstall");
+      btn.disabled = true;
+      $("console").innerHTML = "";
+      $("installBadge").textContent = "running…";
+      $("installBadge").className = "badge run";
+      try {
+        const r = await App().RunInstall();
+        if (r.ok) {
+          $("installBadge").textContent = "[ok] all ready";
+          $("installBadge").className = "badge ok";
+          appendLog("\n✅ 全部就绪。打开一个新终端,输入 claude 即可开始。\n");
+        } else {
+          $("installBadge").textContent = `[!] ${r.failed} failed`;
+          $("installBadge").className = "badge warn";
+        }
+      } catch (e) {
+        $("installBadge").textContent = "[x] error";
+        $("installBadge").className = "badge warn";
+        appendLog("\n[失败] " + e + "\n");
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    $("btnImport").onclick = async () => {
+      const text = $("cfgText").value.trim();
+      if (!text) return toast("请先粘贴 settings.json 内容", "err");
+      try {
+        await App().ImportConfig(text);
+        toast("✓ 已导入到 ~/.claude/settings.json", "ok");
+        await loadConfig();
+      } catch (e) { toast("× 导入失败: " + e, "err"); }
+    };
+
+    $("btnRemove").onclick = async () => {
+      try {
+        await App().RemoveConfig();
+        $("cfgText").value = "";
+        toast("✓ 已移除当前配置", "ok");
+        await loadConfig();
+      } catch (e) { toast("× 移除失败: " + e, "err"); }
+    };
+
+    window.runtime.EventsOn("doctor:log", appendLog);
+    window.addEventListener("DOMContentLoaded", () => { loadSys(); loadConfig(); });
+  </script>
+</body>
+</html>
