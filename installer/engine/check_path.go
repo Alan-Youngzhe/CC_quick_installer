@@ -14,7 +14,7 @@ const pathEnd = "# <<< claude-toolbox PATH <<<"
 
 // PathCheck 把工具目录写入 PATH。
 // macOS/Linux:写入 shell 配置文件(zsh/bash),免管理员。
-// Windows:用 setx 写当前用户 PATH(HKCU),免管理员。
+// Windows:直接读写 HKCU\Environment 注册表项,避免 setx 的 1024 字符截断问题。
 type PathCheck struct{}
 
 func (PathCheck) ID() string       { return "path-register" }
@@ -34,15 +34,33 @@ func (p PathCheck) shellRC(ctx *Context) string {
 	if strings.Contains(shell, "bash") {
 		return filepath.Join(ctx.Home, ".bashrc")
 	}
-	// 现代 macOS 默认 zsh
 	return filepath.Join(ctx.Home, ".zshrc")
+}
+
+// winUserPath 从注册表读取当前用户的 PATH(HKCU\Environment)。
+// 不使用 os.Getenv，因为那是进程启动时已合并系统 PATH 的快照，写回会导致路径膨胀。
+func winUserPath() string {
+	out, err := exec.Command("reg", "query", `HKCU\Environment`, "/v", "Path").CombinedOutput()
+	if err != nil {
+		return ""
+	}
+	for _, line := range strings.Split(string(out), "\n") {
+		line = strings.TrimSpace(line)
+		for _, t := range []string{"REG_EXPAND_SZ", "REG_SZ"} {
+			if idx := strings.Index(line, t); idx != -1 {
+				return strings.TrimSpace(line[idx+len(t):])
+			}
+		}
+	}
+	return ""
 }
 
 func (p PathCheck) Detect(ctx *Context) (Status, string) {
 	if ctx.OS == "windows" {
-		cur := os.Getenv("PATH")
+		cur := winUserPath()
+		curLower := strings.ToLower(cur)
 		for _, d := range p.dirs(ctx) {
-			if !strings.Contains(cur, d) {
+			if !strings.Contains(curLower, strings.ToLower(d)) {
 				return StatusFixable, "用户 PATH 缺少 " + d
 			}
 		}
@@ -57,18 +75,39 @@ func (p PathCheck) Detect(ctx *Context) (Status, string) {
 
 func (p PathCheck) Fix(ctx *Context) error {
 	if ctx.OS == "windows" {
-		// 注意:setx 有 1024 字符上限,生产环境建议直接读改 HKCU\Environment 注册表项。
-		add := strings.Join(p.dirs(ctx), ";")
-		cur := os.Getenv("PATH")
-		out, err := exec.Command("setx", "PATH", cur+";"+add).CombinedOutput()
+		curUser := winUserPath()
+		curLower := strings.ToLower(curUser)
+
+		// 只追加尚未存在的目录
+		toAdd := []string{}
+		for _, d := range p.dirs(ctx) {
+			if !strings.Contains(curLower, strings.ToLower(d)) {
+				toAdd = append(toAdd, d)
+			}
+		}
+		if len(toAdd) == 0 {
+			return nil
+		}
+
+		newPath := curUser
+		if newPath != "" && !strings.HasSuffix(newPath, ";") {
+			newPath += ";"
+		}
+		newPath += strings.Join(toAdd, ";")
+
+		// reg add 不受 1024 字符限制，且只修改用户 PATH，不污染系统 PATH
+		out, err := exec.Command("reg", "add",
+			`HKCU\Environment`, "/v", "Path", "/t", "REG_EXPAND_SZ",
+			"/d", newPath, "/f").CombinedOutput()
 		if err != nil {
-			return fmt.Errorf("%v: %s", err, string(out))
+			return fmt.Errorf("写入注册表失败: %v\n%s", err, out)
 		}
 		return nil
 	}
+
 	rc := p.shellRC(ctx)
 	if data, _ := os.ReadFile(rc); strings.Contains(string(data), pathBegin) {
-		return nil // 幂等:已写入则跳过
+		return nil
 	}
 	var b strings.Builder
 	b.WriteString("\n" + pathBegin + "\n")
@@ -88,7 +127,8 @@ func (p PathCheck) Fix(ctx *Context) error {
 
 func (p PathCheck) Verify(ctx *Context) error {
 	if ctx.OS == "windows" {
-		return nil // setx 已成功;新 PATH 需重开终端生效,这里不阻塞
+		// 注册表已写入；新 PATH 需重开终端生效，这里不阻塞校验
+		return nil
 	}
 	if st, msg := p.Detect(ctx); st != StatusOK {
 		return errors.New(msg)
