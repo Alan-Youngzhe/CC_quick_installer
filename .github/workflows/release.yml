@@ -15,6 +15,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+          cache-dependency-path: installer/go.sum
 
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
@@ -22,11 +23,6 @@ jobs:
       - name: Build macOS universal app
         working-directory: installer/gui
         run: wails build -platform darwin/universal -clean
-
-      - name: Rename .app bundle
-        run: |
-          mv installer/gui/build/bin/claude-toolbox-gui.app \
-             installer/gui/build/bin/CCQuickInstaller.app
 
       - name: Create DMG
         run: |
@@ -53,24 +49,24 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+          cache-dependency-path: installer/go.sum
 
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Install WebView2
+        shell: pwsh
         run: |
           Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile 'MicrosoftEdgeWebview2Setup.exe'
           Start-Process -FilePath 'MicrosoftEdgeWebview2Setup.exe' -Args '/silent /install' -Wait
-        shell: pwsh
 
       - name: Build Windows app
         working-directory: installer/gui
         run: wails build -platform windows/amd64 -clean
 
-      - name: Rename exe
-        run: |
-          mv installer/gui/build/bin/CCQuickInstaller.exe CCQuickInstaller-win-x64.exe
+      - name: Copy exe to release name
         shell: pwsh
+        run: Copy-Item installer\gui\build\bin\CCQuickInstaller.exe CCQuickInstaller-win-x64.exe
 
       - uses: actions/upload-artifact@v4
         with:
