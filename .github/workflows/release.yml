@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-mac:
-    name: Build macOS (Universal)
+    name: Build macOS (Universal binary)
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,31 +17,21 @@ jobs:
           go-version: '1.22'
           cache-dependency-path: installer/go.sum
 
-      - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-
-      - name: Build macOS universal app
-        working-directory: installer/gui
-        run: wails build -platform darwin/universal -clean
-
-      - name: Create DMG
+      - name: Build macOS universal binary
         run: |
-          mkdir dmg_staging
-          cp -R installer/gui/build/bin/CCQuickInstaller.app dmg_staging/
-          ln -s /Applications dmg_staging/Applications
-          hdiutil create \
-            -volname "CC Quick Installer" \
-            -srcfolder dmg_staging \
-            -ov -format UDZO \
-            CCQuickInstaller-mac.dmg
+          cd installer
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o /tmp/cc-darwin-arm64 ./webui/
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o /tmp/cc-darwin-amd64 ./webui/
+          lipo -create -output CCQuickInstaller-mac /tmp/cc-darwin-arm64 /tmp/cc-darwin-amd64
+          chmod +x CCQuickInstaller-mac
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mac-dmg
-          path: CCQuickInstaller-mac.dmg
+          name: mac-binary
+          path: installer/CCQuickInstaller-mac
 
   build-windows:
-    name: Build Windows (x64)
+    name: Build Windows GUI (x64)
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,17 +44,11 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      - name: Install WebView2
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile 'MicrosoftEdgeWebview2Setup.exe'
-          Start-Process -FilePath 'MicrosoftEdgeWebview2Setup.exe' -Args '/silent /install' -Wait
-
-      - name: Build Windows app
+      - name: Build Windows GUI
         working-directory: installer/gui
-        run: wails build -platform windows/amd64 -clean
+        run: wails build -platform windows/amd64 -clean -webview2 embed
 
-      - name: Copy exe to release name
+      - name: Copy to release name
         shell: pwsh
         run: Copy-Item installer\gui\build\bin\CCQuickInstaller.exe CCQuickInstaller-win-x64.exe
 
@@ -82,7 +66,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: mac-dmg
+          name: mac-binary
 
       - uses: actions/download-artifact@v4
         with:
@@ -92,7 +76,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            CCQuickInstaller-mac.dmg
+            CCQuickInstaller-mac
             CCQuickInstaller-win-x64.exe
           body: |
             ## Claude Code Quick Installer ${{ github.ref_name }}
@@ -103,13 +87,23 @@ jobs:
 
             | 平台 | 文件 | 说明 |
             |------|------|------|
-            | macOS (Apple Silicon + Intel) | `CCQuickInstaller-mac.dmg` | GUI 图形安装器，拖入 Applications 即用 |
-            | Windows x64 | `CCQuickInstaller-win-x64.exe` | GUI 图形安装器，双击运行 |
+            | macOS (Apple Silicon + Intel) | `CCQuickInstaller-mac` | 双击终端运行，自动弹出浏览器界面 |
+            | Windows x64 | `CCQuickInstaller-win-x64.exe` | 双击运行 GUI 图形安装器 |
 
-            ### 使用方法
+            ### macOS 使用方法
 
-            **macOS：** 打开 DMG → 拖拽 app 到 Applications → 点击 **RUN INSTALL** → 粘贴 `settings.json` → 新终端输入 `claude`
+            下载后在终端运行：
+            ```bash
+            chmod +x CCQuickInstaller-mac
+            ./CCQuickInstaller-mac
+            ```
+            浏览器会自动打开安装界面。
 
-            **Windows：** 双击 `.exe` → 点击 **RUN INSTALL** → 粘贴 `settings.json` → 新终端输入 `claude`
+            ### Windows 使用方法
 
-            > macOS 版未申请 Apple 代码签名，首次打开需在「系统设置 → 隐私与安全性」中点「仍要打开」。
+            双击 `CCQuickInstaller-win-x64.exe`，图形界面自动弹出。
+
+            ### 安装完成后
+
+            1. 在「import_config」面板粘贴你的 `settings.json`（配置模型与 API Key）
+            2. 打开**新终端**，输入 `claude` 开始使用
