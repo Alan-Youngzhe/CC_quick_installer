@@ -1,0 +1,119 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-mac:
+    name: Build macOS (Universal)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build macOS universal app
+        working-directory: installer/gui
+        run: wails build -platform darwin/universal -clean
+
+      - name: Rename .app bundle
+        run: |
+          mv installer/gui/build/bin/claude-toolbox-gui.app \
+             installer/gui/build/bin/CCQuickInstaller.app
+
+      - name: Create DMG
+        run: |
+          mkdir dmg_staging
+          cp -R installer/gui/build/bin/CCQuickInstaller.app dmg_staging/
+          ln -s /Applications dmg_staging/Applications
+          hdiutil create \
+            -volname "CC Quick Installer" \
+            -srcfolder dmg_staging \
+            -ov -format UDZO \
+            CCQuickInstaller-mac.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-dmg
+          path: CCQuickInstaller-mac.dmg
+
+  build-windows:
+    name: Build Windows (x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install WebView2
+        run: |
+          Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile 'MicrosoftEdgeWebview2Setup.exe'
+          Start-Process -FilePath 'MicrosoftEdgeWebview2Setup.exe' -Args '/silent /install' -Wait
+        shell: pwsh
+
+      - name: Build Windows app
+        working-directory: installer/gui
+        run: wails build -platform windows/amd64 -clean
+
+      - name: Rename exe
+        run: |
+          mv installer/gui/build/bin/CCQuickInstaller.exe CCQuickInstaller-win-x64.exe
+        shell: pwsh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win-exe
+          path: CCQuickInstaller-win-x64.exe
+
+  release:
+    name: Publish Release
+    needs: [build-mac, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mac-dmg
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: win-exe
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            CCQuickInstaller-mac.dmg
+            CCQuickInstaller-win-x64.exe
+          body: |
+            ## Claude Code Quick Installer ${{ github.ref_name }}
+
+            一键安装 Claude Code — 用户态、零依赖、国内直连。
+
+            ### 下载
+
+            | 平台 | 文件 | 说明 |
+            |------|------|------|
+            | macOS (Apple Silicon + Intel) | `CCQuickInstaller-mac.dmg` | GUI 图形安装器，拖入 Applications 即用 |
+            | Windows x64 | `CCQuickInstaller-win-x64.exe` | GUI 图形安装器，双击运行 |
+
+            ### 使用方法
+
+            **macOS：** 打开 DMG → 拖拽 app 到 Applications → 点击 **RUN INSTALL** → 粘贴 `settings.json` → 新终端输入 `claude`
+
+            **Windows：** 双击 `.exe` → 点击 **RUN INSTALL** → 粘贴 `settings.json` → 新终端输入 `claude`
+
+            > macOS 版未申请 Apple 代码签名，首次打开需在「系统设置 → 隐私与安全性」中点「仍要打开」。
