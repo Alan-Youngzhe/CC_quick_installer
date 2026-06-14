@@ -17,7 +17,7 @@ var errEngine = errors.New("引擎未就绪")
 func main() {
 	app := NewApp()
 	err := wails.Run(&options.App{
-		Title:            "Claude Code 一键安装器",
+		Title:            "CODE-FORGE 一键安装器",
 		Width:            760,
 		Height:           620,
 		MinWidth:         640,

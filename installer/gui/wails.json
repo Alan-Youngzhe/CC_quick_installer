@@ -9,7 +9,7 @@
   "frontend:dir": "frontend",
   "wailsjsdir": "frontend",
   "info": {
-    "productName": "Claude Code 一键安装器",
+    "productName": "CODE-FORGE 一键安装器",
     "comments": "用户态零依赖安装 + 服务商一键切换"
   }
 }
