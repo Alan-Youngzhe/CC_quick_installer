@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Claude Code Quick Installer</title>
+  <title>CODE-FORGE · Quick Installer</title>
   <style>
     :root {
       --bg: #070b08;
@@ -14,6 +14,7 @@
       --red: #ff5f56;
       --border-c: #16442a;
       --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --win-w: 760px;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -30,7 +31,11 @@
     }
     @keyframes flick { 0%,97%{opacity:1} 98%{opacity:.85} 100%{opacity:1} }
 
-    .wrap { padding: 14px 18px 26px; position: relative; z-index: 1; }
+    /* 和 Wails 窗口宽度一致，居中显示 */
+    .wrap {
+      max-width: var(--win-w); margin: 0 auto;
+      padding: 14px 18px 26px; position: relative; z-index: 1;
+    }
 
     pre.banner {
       margin: 0 0 2px; color: var(--fg); font-size: 9px; line-height: 1.05;
