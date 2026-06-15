@@ -24,10 +24,32 @@ if [[ "$(uname)" != "Darwin" ]]; then
 fi
 
 printf '→ 获取最新版本...\n'
-DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/${BINARY_NAME}"
+GITHUB_URL="https://github.com/${REPO}/releases/latest/download/${BINARY_NAME}"
 
-printf '→ 下载安装器（Universal Binary）...\n'
-curl -fsSL --progress-bar "${DOWNLOAD_URL}" -o "${INSTALL_PATH}"
+# 安装器二进制托管在 GitHub Releases，而 release-assets.githubusercontent.com 在国内被墙，
+# 直连会 curl:(7) 连接失败。这里优先走 GitHub 国内加速镜像，逐个尝试，最后才直连。
+# （npmmirror 国内源只负责安装器运行后下载 Node/Claude，管不到"下载安装器自身"这一步。）
+MIRRORS=(
+  "https://ghfast.top/"
+  "https://gh-proxy.com/"
+  ""
+)
+
+downloaded=0
+for m in "${MIRRORS[@]}"; do
+  label="${m:-直连 GitHub}"
+  printf '→ 下载安装器（Universal Binary）· %s\n' "${label}"
+  if curl -fsSL --progress-bar "${m}${GITHUB_URL}" -o "${INSTALL_PATH}"; then
+    downloaded=1
+    break
+  fi
+  printf '\033[33m  此源失败，尝试下一个...\033[0m\n'
+done
+
+if [[ "${downloaded}" != "1" ]]; then
+  printf '\033[31m✗ 所有下载源均连接失败，请检查网络后重试，或手动下载安装器\033[0m\n'
+  exit 1
+fi
 
 printf '→ 解除 Gatekeeper 隔离...\n'
 xattr -dr com.apple.quarantine "${INSTALL_PATH}" 2>/dev/null || true

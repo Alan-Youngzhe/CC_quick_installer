@@ -25,6 +25,10 @@ jobs:
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VER}" -o /tmp/cc-darwin-amd64 ./webui/
           lipo -create -output CCQuickInstaller-mac /tmp/cc-darwin-arm64 /tmp/cc-darwin-amd64
           chmod +x CCQuickInstaller-mac
+          # lipo 合并后会破坏 Go 链接器写入的 ad-hoc 签名，Apple 芯片会以 SIGKILL("killed")拒绝运行。
+          # 这里对通用二进制重新做一次 ad-hoc 签名，恢复有效签名。
+          codesign --force --sign - CCQuickInstaller-mac
+          codesign --verify --verbose CCQuickInstaller-mac
 
       - uses: actions/upload-artifact@v4
         with:

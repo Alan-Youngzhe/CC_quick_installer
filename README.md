@@ -22,11 +22,15 @@ curl -fsSL https://raw.githubusercontent.com/Alan-Youngzhe/CC_quick_installer/ma
 
 ```bash
 cd ~/Downloads
+xattr -dr com.apple.quarantine CCQuickInstaller-mac   # 解除下载隔离，避免被 Gatekeeper 拦截
 chmod +x CCQuickInstaller-mac
 ./CCQuickInstaller-mac
 ```
 
 > ⚠️ 必须先 `cd ~/Downloads` 进入下载目录，再运行命令。
+>
+> 🌐 GitHub 下载页国内打不开时，用加速镜像直接下载二进制：
+> `https://ghfast.top/https://github.com/Alan-Youngzhe/CC_quick_installer/releases/latest/download/CCQuickInstaller-mac`
 
 ### Windows（双击运行）
 
