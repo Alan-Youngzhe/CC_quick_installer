@@ -84,25 +84,35 @@ jobs:
 
             一键安装 Claude Code — 用户态、零依赖、国内直连。
 
-            ### 下载
+            ---
 
-            | 平台 | 文件 | 说明 |
-            |------|------|------|
-            | macOS (Apple Silicon + Intel) | `CCQuickInstaller-mac` | 双击终端运行，自动弹出浏览器界面 |
-            | Windows x64 | `CCQuickInstaller-${{ github.ref_name }}-win-x64.exe` | 双击运行 GUI 图形安装器 |
+            ### macOS — 推荐：一行命令（最省事）
 
-            ### macOS 使用方法
+            打开终端，粘贴以下命令回车即可，全程自动：
 
-            下载后在终端运行：
             ```bash
+            curl -fsSL https://raw.githubusercontent.com/Alan-Youngzhe/CC_quick_installer/main/install.sh | bash
+            ```
+
+            ### macOS — 备选：手动下载
+
+            下载本页的 `CCQuickInstaller-mac`，然后在终端执行：
+
+            ```bash
+            cd ~/Downloads
             chmod +x CCQuickInstaller-mac
             ./CCQuickInstaller-mac
             ```
-            浏览器会自动打开安装界面。
 
-            ### Windows 使用方法
+            > ⚠️ 注意：必须先 `cd ~/Downloads` 进入下载目录，再运行命令。
 
-            双击 `CCQuickInstaller-win-x64.exe`，图形界面自动弹出。
+            ---
+
+            ### Windows x64
+
+            下载本页的 `CCQuickInstaller-${{ github.ref_name }}-win-x64.exe`，双击运行，图形界面自动弹出。
+
+            ---
 
             ### 安装完成后
 

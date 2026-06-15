@@ -6,7 +6,7 @@
 
 ## 快速开始
 
-### macOS（一行命令）
+### macOS — 推荐：一行命令（最省事）
 
 打开终端，粘贴以下命令：
 
@@ -16,9 +16,21 @@ curl -fsSL https://raw.githubusercontent.com/Alan-Youngzhe/CC_quick_installer/ma
 
 脚本自动下载安装器、解除 Gatekeeper 隔离、打开浏览器界面，全程无需手动操作。
 
+### macOS — 备选：手动下载
+
+前往 [Releases](https://github.com/Alan-Youngzhe/CC_quick_installer/releases/latest) 下载 `CCQuickInstaller-mac`，然后在终端执行：
+
+```bash
+cd ~/Downloads
+chmod +x CCQuickInstaller-mac
+./CCQuickInstaller-mac
+```
+
+> ⚠️ 必须先 `cd ~/Downloads` 进入下载目录，再运行命令。
+
 ### Windows（双击运行）
 
-下载 [Releases](https://github.com/Alan-Youngzhe/CC_quick_installer/releases/latest) 中的 `CCQuickInstaller-win-x64.exe`，双击打开图形界面。
+下载 [Releases](https://github.com/Alan-Youngzhe/CC_quick_installer/releases/latest) 中的 `CCQuickInstaller-vX.X.X-win-x64.exe`，双击打开图形界面。
 
 ---
 
