@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"os/exec"
+	"runtime"
 
 	"claude-toolbox-installer/engine"
 
@@ -86,6 +88,13 @@ func (a *App) RunInstall() InstallResult {
 		if r.Status == engine.StatusFailed {
 			failed++
 		}
+	}
+	// 安装成功后在 Windows 上自动弹出一个新 CMD 窗口。
+	// 该 CMD 继承安装器进程的环境（Fix 已调用 os.Setenv 更新了当前进程 PATH），
+	// 因此用户无需任何手动操作即可直接使用 claude 命令。
+	if failed == 0 && runtime.GOOS == "windows" {
+		exec.Command("cmd", "/c", "start", "cmd", "/k",
+			`echo.&echo   ================================&echo   Claude 已就绪！输入 claude 开始使用&echo   ================================&echo.`).Start()
 	}
 	return InstallResult{Failed: failed, OK: failed == 0}
 }

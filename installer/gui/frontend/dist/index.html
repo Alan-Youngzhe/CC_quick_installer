@@ -191,7 +191,7 @@
         if (r.ok) {
           $("installBadge").textContent = "[ok] all ready";
           $("installBadge").className = "badge ok";
-          appendLog("\n✅ 环境就绪。下一步：\n  1. 在下方 [import_config] 导入你的 settings.json\n  2. 重新打开一个新的 CMD 或 PowerShell 窗口\n  3. 在新终端输入 claude 开始使用\n  ⚠ 必须是安装完成后新开的终端，旧终端不会自动更新 PATH\n");
+          appendLog("\n✅ 环境就绪。\n  → 已自动为你打开一个新 CMD 窗口，直接在里面输入 claude 即可\n  → 导入 settings.json 后即可开始使用\n  ⚠ 请在自动弹出的新窗口中使用，不要在此前打开的终端中输入 claude\n");
         } else {
           $("installBadge").textContent = `[!] ${r.failed} failed`;
           $("installBadge").className = "badge warn";

@@ -115,6 +115,12 @@ func (p PathCheck) Fix(ctx *Context) error {
 		if err != nil {
 			return fmt.Errorf("写入 PATH 失败: %v\n%s", err, out)
 		}
+		// 同步更新当前进程的 PATH，让安装器进程衍生的子进程（新终端）直接继承新 PATH
+		cur := os.Getenv("PATH")
+		if cur != "" && !strings.HasSuffix(cur, ";") {
+			cur += ";"
+		}
+		os.Setenv("PATH", cur+strings.Join(toAdd, ";"))
 		return nil
 	}
 
