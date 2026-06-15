@@ -8,13 +8,18 @@
 
 ### macOS — 推荐：一行命令（最省事）
 
-打开终端，粘贴以下命令：
+打开终端，粘贴以下命令（**国内推荐**，连入口脚本都走加速镜像，全程免梯子）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Alan-Youngzhe/CC_quick_installer/main/install.sh | bash
+curl -fsSL https://ghfast.top/https://raw.githubusercontent.com/Alan-Youngzhe/CC_quick_installer/main/install.sh | bash
 ```
 
-脚本自动下载安装器、解除 Gatekeeper 隔离、打开浏览器界面，全程无需手动操作。
+脚本自动下载安装器（同样走镜像）、解除 Gatekeeper 隔离、打开浏览器界面，全程无需手动操作。
+
+> 有梯子或镜像偶发不可用时，可用直连版：
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/Alan-Youngzhe/CC_quick_installer/main/install.sh | bash
+> ```
 
 ### macOS — 备选：手动下载
 
