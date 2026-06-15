@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"os/exec"
 	"runtime"
 
@@ -90,9 +91,12 @@ func (a *App) RunInstall() InstallResult {
 		}
 	}
 	// 安装成功后在 Windows 上自动弹出一个新 CMD 窗口。
-	// 该 CMD 继承安装器进程的环境（Fix 已调用 os.Setenv 更新了当前进程 PATH），
-	// 因此用户无需任何手动操作即可直接使用 claude 命令。
+	// 不依赖 Fix() 是否运行过 os.Setenv（PATH 检查"已就绪"时 Fix 会跳过），
+	// 在这里强制把工具目录写入当前进程 PATH，确保弹出的新 CMD 一定能找到 claude。
 	if failed == 0 && runtime.GOOS == "windows" {
+		toolDirs := a.ec.LocalBin + ";" + a.ec.NodeDir + ";" + a.ec.NpmGlobal
+		existing := os.Getenv("PATH")
+		os.Setenv("PATH", toolDirs+";"+existing)
 		exec.Command("cmd", "/c", "start", "cmd", "/k",
 			`echo.&echo   ================================&echo   Claude 已就绪！输入 claude 开始使用&echo   ================================&echo.`).Start()
 	}
