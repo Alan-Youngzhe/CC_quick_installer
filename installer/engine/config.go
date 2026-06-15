@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 // SettingsPath 返回 Claude Code 的配置文件路径。
@@ -14,10 +15,14 @@ func SettingsPath(home string) string {
 
 // ImportSettings 校验内容为合法 JSON 后,整份写入 ~/.claude/settings.json。
 // 用户从别处(团队分发、文档)复制一份 settings.json 直接粘贴导入即可,无需逐项填写。
+// Windows 上自动剔除 hooks 字段：hooks 通常调用 /bin/sh，在 Windows 上无法运行。
 func ImportSettings(home, content string) error {
 	var probe map[string]any
 	if err := json.Unmarshal([]byte(content), &probe); err != nil {
 		return fmt.Errorf("不是合法的 JSON:%v", err)
+	}
+	if runtime.GOOS == "windows" {
+		delete(probe, "hooks")
 	}
 	p := SettingsPath(home)
 	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {

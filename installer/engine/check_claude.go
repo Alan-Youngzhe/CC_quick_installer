@@ -37,8 +37,10 @@ func (c ClaudeCheck) Detect(ctx *Context) (Status, string) {
 	if _, err := os.Stat(bin); err == nil {
 		return StatusOK, "已安装于 " + bin
 	}
+	// 在 PATH 里找到了但不在预期目录，触发重装迁移到新路径。
+	// 这确保 claude.exe 真正落在 LocalBin，PATH 注册后 CMD/PowerShell 都能找到。
 	if p, err := exec.LookPath("claude"); err == nil {
-		return StatusOK, "已在 PATH: " + p
+		return StatusFixable, "已在 " + p + "，迁移至 " + bin
 	}
 	return StatusFixable, "未检测到 claude"
 }

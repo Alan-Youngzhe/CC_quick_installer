@@ -22,6 +22,15 @@ func (PathCheck) Name() string     { return "PATH 注册(免管理员)" }
 func (PathCheck) NeedsAdmin() bool { return false }
 
 func (p PathCheck) dirs(ctx *Context) []string {
+	if ctx.OS == "windows" {
+		// Windows Node.js 解压后 node.exe/npm.cmd 在 NodeDir 根目录，无 bin 子目录。
+		// npm 全局包在 Windows 上也直接落在 NpmGlobal 根目录。
+		return []string{
+			ctx.LocalBin,
+			ctx.NodeDir,
+			ctx.NpmGlobal,
+		}
+	}
 	return []string{
 		ctx.LocalBin,
 		filepath.Join(ctx.NodeDir, "bin"),
