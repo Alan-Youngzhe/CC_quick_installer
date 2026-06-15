@@ -103,6 +103,48 @@ func (a *App) RunInstall() InstallResult {
 	return InstallResult{Failed: failed, OK: failed == 0}
 }
 
+// --- cc-switch(可选:服务商配置切换工具,默认不勾,位置可自选) ---
+
+// CCSwitchInfo 给前端展示 cc-switch 版本与默认安装目录(预填到输入框)。
+func (a *App) CCSwitchInfo() map[string]string {
+	if a.ec == nil {
+		return map[string]string{"error": "engine not ready"}
+	}
+	return map[string]string{
+		"version": engine.CCSwitchVersion,
+		"dir":     engine.DefaultCCSwitchDir(a.ec),
+	}
+}
+
+// ChooseDir 打开原生目录选择框,返回用户选择的目录(取消则返回空串,前端保留原值)。
+func (a *App) ChooseDir(defaultDir string) string {
+	if a.ctx == nil {
+		return ""
+	}
+	dir, err := wruntime.OpenDirectoryDialog(a.ctx, wruntime.OpenDialogOptions{
+		Title:            "选择 cc-switch 安装位置",
+		DefaultDirectory: defaultDir,
+	})
+	if err != nil {
+		return ""
+	}
+	return dir
+}
+
+// InstallCCSwitch 下载并安装 cc-switch 到 dir(空则用默认目录)。
+// 进度复用现有 "doctor:log" 事件,直接打到同一个控制台。
+func (a *App) InstallCCSwitch(dir string) error {
+	if a.ec == nil {
+		return errEngine
+	}
+	_, err := engine.InstallCCSwitch(a.ec, dir, func(line string) {
+		if a.ctx != nil {
+			wruntime.EventsEmit(a.ctx, "doctor:log", line)
+		}
+	})
+	return err
+}
+
 // SystemInfo 返回平台/路径概览,GUI 顶部展示。
 func (a *App) SystemInfo() map[string]string {
 	if a.ec == nil {

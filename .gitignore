@@ -1,0 +1,10 @@
+# 构建产物
+/installer/CCQuickInstaller-mac
+/installer/CCQuickInstaller-*
+/installer/doctor
+/installer/dist/
+/installer/gui/build/bin/
+/installer/webui/webui
+
+# 系统垃圾
+.DS_Store

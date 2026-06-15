@@ -99,6 +99,15 @@
     textarea:focus, button:focus { outline: 1px solid var(--fg); outline-offset: 1px; }
     textarea::placeholder { color: #2c6b44; }
 
+    input[type=text].pathinput {
+      font: inherit; flex: 1; min-width: 220px; color: var(--fg);
+      background: #050805; border: 1px solid var(--border-c); border-radius: 2px;
+      padding: 7px 10px; font-size: 12px; text-shadow: inherit;
+    }
+    input[type=text].pathinput:focus { outline: 1px solid var(--fg); outline-offset: 1px; }
+    input[type=checkbox] { accent-color: var(--fg); width: 14px; height: 14px; }
+    label.opt { cursor: pointer; user-select: none; }
+
     .toast { font-size: 12px; color: var(--fg-dim); min-height: 16px; margin-top: 9px; }
     .toast.ok { color: var(--fg); }
     .toast.err { color: var(--red); }
@@ -142,6 +151,25 @@
         <button id="btnRemove">REMOVE</button>
       </div>
       <div class="toast" id="toast"></div>
+    </section>
+
+    <section class="panel">
+      <span class="label">[ cc-switch · 可选 ]</span>
+      <div class="desc">服务商配置切换工具 &gt; 装完可一键在不同 API / 模型之间切换。默认不安装。</div>
+      <label class="row opt">
+        <input type="checkbox" id="ccsEnable" />
+        <span>安装 cc-switch <span id="ccsVer"></span>（可自选安装位置）</span>
+      </label>
+      <div id="ccsBox" style="display:none; margin-top:12px;">
+        <div class="row">
+          <input type="text" id="ccsDir" class="pathinput" spellcheck="false" placeholder="安装目录（可直接编辑）" />
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="primary" id="btnCcsInstall">INSTALL CC-SWITCH</button>
+          <span class="badge" id="ccsBadge">idle</span>
+        </div>
+      </div>
+      <div class="toast" id="ccsToast"></div>
     </section>
   </div>
 
@@ -261,8 +289,48 @@
       } catch (e) { toast("× 移除失败: " + e, "err"); }
     };
 
+    // --- cc-switch(可选)---
+    function ccsToast(msg, kind) { const t = $("ccsToast"); t.textContent = msg; t.className = "toast" + (kind ? " " + kind : ""); }
+
+    async function loadCcs() {
+      try {
+        const r = await fetch("/api/ccswitch");
+        const info = await r.json();
+        $("ccsVer").textContent = "v" + info.version;
+        $("ccsDir").value = info.dir;
+      } catch {}
+    }
+
+    $("ccsEnable").onchange = (e) => { $("ccsBox").style.display = e.target.checked ? "block" : "none"; };
+
+    $("btnCcsInstall").onclick = async () => {
+      const btn = $("btnCcsInstall");
+      btn.disabled = true;
+      $("ccsBadge").textContent = "installing…";
+      $("ccsBadge").className = "badge run";
+      ccsToast("下载中，约 33MB，请稍候…");
+      try {
+        const r = await fetch("/api/ccswitch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dir: $("ccsDir").value.trim() }),
+        });
+        if (!r.ok) throw new Error(await r.text());
+        $("ccsBadge").textContent = "[ok] installed";
+        $("ccsBadge").className = "badge ok";
+        ccsToast("✓ cc-switch 已安装，可在「访达 > 应用程序」或所选目录中打开", "ok");
+      } catch (e) {
+        $("ccsBadge").textContent = "[x] failed";
+        $("ccsBadge").className = "badge warn";
+        ccsToast("× 安装失败: " + e, "err");
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
     loadSys();
     loadConfig();
+    loadCcs();
   </script>
 </body>
 </html>

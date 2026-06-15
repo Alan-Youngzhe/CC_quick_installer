@@ -39,6 +39,7 @@ chmod +x CCQuickInstaller-mac
 1. 点击 **RUN INSTALL** — 自动检测并安装 Node.js、Claude Code，修复 PATH
 2. 在 **import_config** 面板粘贴你的 `settings.json`，配置模型与 API Key
 3. 打开一个**新终端**，输入 `claude` 开始使用
+4.（可选）在 **cc-switch** 面板勾选安装 [cc-switch](https://github.com/farion1231/cc-switch) — 多服务商配置切换工具，装完可一键在不同 API / 模型间切换；默认不安装，安装位置可自选
 
 ---
 
@@ -64,6 +65,7 @@ chmod +x CCQuickInstaller-mac
 - **国内直连**：Node.js 走 npmmirror，Claude Code 原生二进制走 npmmirror npm 平台包，体积小 3×，速度快 4×
 - **幂等**：重复运行自动跳过已就绪项，中途中断再跑也能续完
 - **CLI + GUI 两用**：macOS 浏览器界面，Windows 原生 GUI，视觉完全一致
+- **可选捆绑 cc-switch**：默认不装；勾选后走 GitHub 国内加速镜像下载，安装位置可自选，与主流程互不影响
 
 ---
 
@@ -77,6 +79,7 @@ installer/
 │   ├── env.go           # 平台探测 + 镜像地址配置
 │   ├── mirror.go        # 下载（断点续传）+ SHA-256 校验
 │   ├── config.go        # settings.json 导入/移除
+│   ├── ccswitch.go      # 可选：cc-switch 下载安装（国内镜像 + 自选位置）
 │   └── check_*.go       # node / claude / npm-prefix / PATH
 ├── webui/               # macOS 浏览器 UI（HTTP server + SSE）
 │   ├── main.go

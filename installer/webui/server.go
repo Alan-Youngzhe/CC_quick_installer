@@ -26,7 +26,36 @@ func newMux() *http.ServeMux {
 	mux.HandleFunc("/api/sysinfo", handleSysinfo)
 	mux.HandleFunc("/api/config", handleConfig)
 	mux.HandleFunc("/api/install", handleInstall)
+	mux.HandleFunc("/api/ccswitch", handleCCSwitch)
 	return mux
+}
+
+// handleCCSwitch:GET 返回 cc-switch 版本与默认目录;POST {dir} 下载安装(可选功能)。
+func handleCCSwitch(w http.ResponseWriter, r *http.Request) {
+	ec, err := engine.NewContext()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, map[string]string{"version": engine.CCSwitchVersion, "dir": engine.DefaultCCSwitchDir(ec)})
+
+	case http.MethodPost:
+		var req struct {
+			Dir string `json:"dir"`
+		}
+		json.NewDecoder(r.Body).Decode(&req) // dir 可空,引擎会回退默认目录
+		path, err := engine.InstallCCSwitch(ec, req.Dir, nil)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		writeJSON(w, map[string]string{"path": path})
+
+	default:
+		http.Error(w, "Method Not Allowed", 405)
+	}
 }
 
 func serveIndex(w http.ResponseWriter, r *http.Request) {
