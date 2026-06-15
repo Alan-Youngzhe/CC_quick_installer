@@ -34,17 +34,19 @@ func (n NpmPrefixCheck) Fix(ctx *Context) error {
 		return err
 	}
 	existing, _ := os.ReadFile(n.npmrc(ctx))
-	if strings.Contains(string(existing), "prefix=") {
-		return nil // 已有 prefix,尊重用户设置,不覆盖
+	// 如果已正确指向目标目录，无需修改
+	if strings.Contains(string(existing), "prefix="+ctx.NpmGlobal) {
+		return nil
 	}
-	line := "prefix=" + ctx.NpmGlobal + "\nregistry=https://registry.npmmirror.com/\n"
-	f, err := os.OpenFile(n.npmrc(ctx), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		return err
+	// 过滤掉旧的 prefix 行（路径可能已变），重写为新路径
+	var kept []string
+	for _, line := range strings.Split(string(existing), "\n") {
+		if t := strings.TrimSpace(line); t != "" && !strings.HasPrefix(t, "prefix=") {
+			kept = append(kept, line)
+		}
 	}
-	defer f.Close()
-	_, err = f.WriteString(line)
-	return err
+	kept = append(kept, "prefix="+ctx.NpmGlobal, "registry=https://registry.npmmirror.com/")
+	return os.WriteFile(n.npmrc(ctx), []byte(strings.Join(kept, "\n")+"\n"), 0o644)
 }
 
 func (n NpmPrefixCheck) Verify(ctx *Context) error {
