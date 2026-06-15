@@ -17,16 +17,11 @@ jobs:
           go-version: '1.22'
           cache-dependency-path: installer/go.sum
 
-      - name: Install UPX
-        run: brew install upx
-
       - name: Build macOS universal binary
         run: |
           cd installer
           CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o /tmp/cc-darwin-arm64 ./webui/
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o /tmp/cc-darwin-amd64 ./webui/
-          upx --best --force-macos /tmp/cc-darwin-arm64
-          upx --best --force-macos /tmp/cc-darwin-amd64
           lipo -create -output CCQuickInstaller-mac /tmp/cc-darwin-arm64 /tmp/cc-darwin-amd64
           chmod +x CCQuickInstaller-mac
 
