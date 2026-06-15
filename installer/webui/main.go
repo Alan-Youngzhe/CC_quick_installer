@@ -28,10 +28,10 @@ func main() {
 	port := ln.Addr().(*net.TCPAddr).Port
 	url := fmt.Sprintf("http://127.0.0.1:%d", port)
 
-	fmt.Println("╔══════════════════════════════════════════╗")
-	fmt.Println("║   Claude Code Quick Installer            ║")
-	fmt.Println("╚══════════════════════════════════════════╝")
-	fmt.Printf("\n服务已启动 → %s\n", url)
+	fmt.Println("==========================================")
+	fmt.Printf("  CODE-FORGE  Quick Installer  %s\n", Version)
+	fmt.Println("==========================================")
+	fmt.Printf("\n>> %s\n", url)
 	fmt.Println("正在打开浏览器，稍候...")
 	fmt.Println("按 Ctrl+C 退出\n")
 
