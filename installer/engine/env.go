@@ -36,20 +36,11 @@ func NewContext() (*Context, error) {
 		// npmmirror 的 npm registry(国内可达)。Claude 二进制即官方平台包的镜像,SHA-256 与官方一致。
 		NpmRegistry: "https://registry.npmmirror.com",
 	}
-	if c.OS == "windows" {
-		base := os.Getenv("LOCALAPPDATA")
-		if base == "" {
-			base = filepath.Join(home, "AppData", "Local")
-		}
-		root := filepath.Join(base, "Programs", "claude-toolbox")
-		c.LocalBin = filepath.Join(root, "bin")
-		c.NodeDir = filepath.Join(root, "node")
-		c.NpmGlobal = filepath.Join(root, "npm-global")
-	} else {
-		c.LocalBin = filepath.Join(home, ".local", "bin")
-		c.NodeDir = filepath.Join(home, ".local", "node")
-		c.NpmGlobal = filepath.Join(home, ".npm-global")
-	}
+	// 所有平台使用相同路径约定，与 Claude Code 内部自检路径 (~/.local/bin) 保持一致。
+	// Windows 上 home = C:\Users\<name>，filepath.Join 自动使用反斜杠，路径合法。
+	c.LocalBin = filepath.Join(home, ".local", "bin")
+	c.NodeDir = filepath.Join(home, ".local", "node")
+	c.NpmGlobal = filepath.Join(home, ".npm-global")
 	return c, nil
 }
 
