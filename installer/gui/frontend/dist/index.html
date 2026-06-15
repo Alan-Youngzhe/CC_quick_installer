@@ -33,10 +33,12 @@
 
     .wrap { padding: 14px 18px 26px; position: relative; z-index: 1; }
 
-    pre.banner {
-      margin: 0 0 2px; color: var(--fg); font-size: 9px; line-height: 1.05;
-      letter-spacing: 0; white-space: pre; overflow: hidden;
+    .brand {
+      font-size: 34px; letter-spacing: 10px; font-weight: 900;
+      color: var(--fg); line-height: 1; margin: 10px 0 4px;
+      text-shadow: 0 0 12px rgba(51,255,122,.8), 0 0 28px rgba(51,255,122,.3);
     }
+    .brand-sep { color: var(--fg-dim); letter-spacing: 4px; }
     .installer-tag {
       color: var(--amber); font-size: 13px; letter-spacing: 3px;
       margin: 0 0 4px; font-weight: normal;
@@ -102,12 +104,7 @@
 </head>
 <body>
   <div class="wrap">
-    <pre class="banner"> ██████╗  ██████╗ ██████╗ ███████╗      ███████╗ ██████╗ ██████╗  ██████╗ ███████╗
-██╔════╝ ██╔═══██╗██╔══██╗██╔════╝      ██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔════╝
-██║      ██║   ██║██║  ██║█████╗   ─── █████╗  ██║   ██║██████╔╝██║  ███╗█████╗
-██║      ██║   ██║██║  ██║██╔══╝   ─── ██╔══╝  ██║   ██║██╔══██╗██║   ██║██╔══╝
-╚██████╗ ╚██████╔╝██████╔╝███████╗     ██║     ╚██████╔╝██║  ██╗╚██████╔╝███████╗
- ╚═════╝  ╚═════╝ ╚═════╝ ╚══════╝     ╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝</pre>
+    <div class="brand">CODE<span class="brand-sep"> / </span>FORGE</div>
     <div class="installer-tag">▌ QUICK INSTALLER</div>
     <div class="sub">// CODE-FORGE · 一键安装 Claude Code · 用户态零依赖 · 国内直连 <span id="sys">booting…</span><span class="blink">_</span></div>
 
@@ -194,7 +191,7 @@
         if (r.ok) {
           $("installBadge").textContent = "[ok] all ready";
           $("installBadge").className = "badge ok";
-          appendLog("\n✅ 环境就绪。下一步：\n  1. 在下方 [import_config] 导入你的 settings.json\n  2. 打开新终端（PowerShell / CMD），输入 claude 开始使用\n  ⚠ claude.exe 是命令行工具，需在终端中运行，直接双击会立即退出\n");
+          appendLog("\n✅ 环境就绪。下一步：\n  1. 在下方 [import_config] 导入你的 settings.json\n  2. 重新打开一个新的 CMD 或 PowerShell 窗口\n  3. 在新终端输入 claude 开始使用\n  ⚠ 必须是安装完成后新开的终端，旧终端不会自动更新 PATH\n");
         } else {
           $("installBadge").textContent = `[!] ${r.failed} failed`;
           $("installBadge").className = "badge warn";

@@ -95,12 +95,16 @@ func (p PathCheck) Fix(ctx *Context) error {
 		}
 		newPath += strings.Join(toAdd, ";")
 
-		// reg add 不受 1024 字符限制，且只修改用户 PATH，不污染系统 PATH
-		out, err := exec.Command("reg", "add",
-			`HKCU\Environment`, "/v", "Path", "/t", "REG_EXPAND_SZ",
-			"/d", newPath, "/f").CombinedOutput()
+		// 用 PowerShell SetEnvironmentVariable 写入用户 PATH：
+		// 1. 直接操作 HKCU\Environment，无 1024 字符截断
+		// 2. 自动广播 WM_SETTINGCHANGE，Explorer 收到后新开的终端立即继承新 PATH
+		script := fmt.Sprintf(
+			`[System.Environment]::SetEnvironmentVariable('Path', '%s', 'User')`,
+			strings.ReplaceAll(newPath, "'", "''"),
+		)
+		out, err := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script).CombinedOutput()
 		if err != nil {
-			return fmt.Errorf("写入注册表失败: %v\n%s", err, out)
+			return fmt.Errorf("写入 PATH 失败: %v\n%s", err, out)
 		}
 		return nil
 	}
