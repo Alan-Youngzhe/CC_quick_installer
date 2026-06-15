@@ -44,7 +44,7 @@ func handleSysinfo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	writeJSON(w, map[string]string{"os": ec.OS, "arch": ec.Arch, "home": ec.Home})
+	writeJSON(w, map[string]string{"os": ec.OS, "arch": ec.Arch, "home": ec.Home, "version": Version})
 }
 
 func handleConfig(w http.ResponseWriter, r *http.Request) {

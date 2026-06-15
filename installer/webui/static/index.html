@@ -173,7 +173,8 @@
       try {
         const r = await fetch("/api/sysinfo");
         const s = await r.json();
-        $("sys").textContent = `· ${s.os}/${s.arch}`;
+        $("sys").textContent = `· ${s.os}/${s.arch} · ${s.version}`;
+        document.title = `CODE-FORGE · Quick Installer ${s.version}`;
       } catch { $("sys").textContent = "· env?"; }
     }
 

@@ -16,6 +16,9 @@ import (
 //go:embed static
 var staticFS embed.FS
 
+// Version 由 CI 通过 -ldflags "-X main.Version=vX.Y.Z" 注入；本地构建显示 dev。
+var Version = "dev"
+
 func main() {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
