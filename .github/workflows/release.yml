@@ -25,8 +25,8 @@ jobs:
           cd installer
           CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o /tmp/cc-darwin-arm64 ./webui/
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o /tmp/cc-darwin-amd64 ./webui/
-          upx --best /tmp/cc-darwin-arm64
-          upx --best /tmp/cc-darwin-amd64
+          upx --best --force-macos /tmp/cc-darwin-arm64
+          upx --best --force-macos /tmp/cc-darwin-amd64
           lipo -create -output CCQuickInstaller-mac /tmp/cc-darwin-arm64 /tmp/cc-darwin-amd64
           chmod +x CCQuickInstaller-mac
 
